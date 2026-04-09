@@ -1,15 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// ── 방문자 추적 (IP 중복 제거) ──
 const dailyVisitors = new Map();
 const coupangClicks = { total: 0, daily: new Map() };
-const blockedIPs = new Map(); // ip -> {reason, time}
+const blockedIPs = new Map();
 const requestCounts = new Map();
 const securityLogs = [];
 const RATE_LIMIT = 100;
@@ -26,8 +26,22 @@ function getTime() {
   return new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 }
 
+function hashPassword(pw) {
+  return crypto.createHash('sha256').update(pw).digest('hex');
+}
+
 const sqlPatterns = /(\bSELECT\b|\bINSERT\b|\bDROP\b|\bUNION\b|--|;--|'--)/i;
 const xssPatterns = /<script|javascript:|onerror=|onload=/i;
+
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
 
 function detectMalicious(req) {
   const body = JSON.stringify(req.body || {});
@@ -39,7 +53,6 @@ function detectMalicious(req) {
   return null;
 }
 
-// ── 미들웨어 ──
 app.use((req, res, next) => {
   const ip = getClientIP(req);
   const today = getToday();
@@ -68,10 +81,13 @@ app.use((req, res, next) => {
     dailyVisitors.get(today).add(ip);
   }
 
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
   next();
 });
 
-// ── HTML 서빙 ──
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -80,7 +96,6 @@ app.get('/security', (req, res) => {
   res.sendFile(path.join(__dirname, 'security_admin.html'));
 });
 
-// ── OpenAI 프록시 ──
 app.post('/api/generate', async (req, res) => {
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -98,7 +113,6 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-// ── 쿠팡 클릭 추적 ──
 app.post('/api/track/coupang', (req, res) => {
   const today = getToday();
   coupangClicks.total++;
@@ -106,7 +120,6 @@ app.post('/api/track/coupang', (req, res) => {
   res.json({ success: true });
 });
 
-// ── 통계 API ──
 app.get('/api/stats', (req, res) => {
   const today = getToday();
   const weekly = {};
@@ -126,14 +139,14 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
-// ── 보안 관리 API ──
-const ADMIN_PW = process.env.ADMIN_PASSWORD || 'admin1234';
+const ADMIN_PW_HASH = hashPassword(process.env.ADMIN_PASSWORD || 'admin1234');
 const adminTokens = new Set();
 
 app.post('/api/security/auth', (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PW) {
-    const token = Math.random().toString(36).slice(2) + Date.now();
+  if (!password) return res.json({ success: false });
+  if (hashPassword(password) === ADMIN_PW_HASH) {
+    const token = crypto.randomBytes(32).toString('hex');
     adminTokens.add(token);
     res.json({ success: true, token });
   } else {
@@ -148,29 +161,29 @@ function adminAuth(req, res, next) {
 }
 
 app.get('/api/security/admin', adminAuth, (req, res) => {
-  const today = getToday();
   const todayRequests = [...requestCounts.values()].reduce((a, times) =>
     a + times.filter(t => Date.now() - t < 86400000).length, 0);
   res.json({
     success: true,
     blocked_count: blockedIPs.size,
     blocked_ips: [...blockedIPs.entries()].map(([ip, info]) => ({ ip, ...info })),
-    security_logs: securityLogs,
+    security_logs: securityLogs.slice(-100),
     total_requests: todayRequests,
   });
 });
 
 app.post('/api/security/unblock', adminAuth, (req, res) => {
-  const { ip } = req.body;
+  const ip = sanitizeInput(req.body.ip);
   blockedIPs.delete(ip);
   securityLogs.push({ time: getTime(), ip, type: '차단 해제', detail: '관리자가 차단 해제' });
   res.json({ success: true });
 });
 
 app.post('/api/security/block', adminAuth, (req, res) => {
-  const { ip, reason } = req.body;
-  blockedIPs.set(ip, { reason: reason || '수동 차단', time: getTime() });
-  securityLogs.push({ time: getTime(), ip, type: '수동 차단', detail: reason || '관리자 수동 차단' });
+  const ip = sanitizeInput(req.body.ip);
+  const reason = sanitizeInput(req.body.reason) || '수동 차단';
+  blockedIPs.set(ip, { reason, time: getTime() });
+  securityLogs.push({ time: getTime(), ip, type: '수동 차단', detail: reason });
   res.json({ success: true });
 });
 
