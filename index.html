@@ -536,7 +536,9 @@ ${activeOpts.map(o=>`- ${o}`).join('\n')}
 (10개 이상, 네이버 검색 기반 실제 검색할 법한 형태로)
 
 각 섹션 [TITLES], [TAGS], [BODY], [KEYWORDS] 마커로 반드시 구분.
-제목 5개는 각각 다르게 — 궁금증 유발형, 공감형, 정보형, 유머형, 반전형.`;
+제목 5개는 각각 다르게 — 궁금증 유발형, 공감형, 정보형, 유머형, 반전형.
+각 제목 아래 클릭율·후킹력·SEO 종합 점수 (10점 만점) 표시.
+형식: 제목 다음 줄에 "점수: X.X" 형태로.`;
 }
 
 function buildTitleOnlyPrompt(){
@@ -555,10 +557,17 @@ function buildTitleOnlyPrompt(){
 
 반드시 아래 형식으로만:
 1. 제목1
+점수: X.X
 2. 제목2
+점수: X.X
 3. 제목3
+점수: X.X
 4. 제목4
-5. 제목5`;
+점수: X.X
+5. 제목5
+점수: X.X
+
+(점수는 클릭율·후킹력·SEO 종합 10점 만점)`;
 }
 
 function parseResult(text){
@@ -575,17 +584,34 @@ function parseResult(text){
 }
 
 function renderTitles(titlesText){
-  const lines=titlesText.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(l=>l);
+  const rawLines=titlesText.split('\n').filter(l=>l.trim());
+  const titles=[];
+  let cur={title:'',score:''};
+  rawLines.forEach(l=>{
+    const scoreMatch=l.match(/점수\s*:\s*([\d.]+)/i);
+    const titleMatch=l.match(/^\d+\.\s*(.+)/);
+    if(titleMatch){
+      if(cur.title) titles.push({...cur});
+      cur={title:titleMatch[1].trim(),score:''};
+    } else if(scoreMatch){
+      cur.score=scoreMatch[1];
+    }
+  });
+  if(cur.title) titles.push(cur);
+
   const el=document.getElementById('titleList');
-  el.innerHTML=lines.map((t,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text3);flex-shrink:0">${i+1}</span>
-      <span style="font-size:13px;font-weight:500;color:var(--text);flex:1;line-height:1.5" class="title-text">${t}</span>
-      <button class="copy-title-btn" style="padding:3px 10px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif">복사</button>
+  el.innerHTML=titles.map((t,i)=>`
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;margin-top:2px">${i+1}</span>
+        <span style="font-size:13px;font-weight:500;color:var(--text);flex:1;line-height:1.5" class="title-text">${t.title}</span>
+        <button class="copy-title-btn" style="padding:3px 10px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;flex-shrink:0">복사</button>
+      </div>
+      ${t.score?`<div style="margin-top:4px;margin-left:19px;font-size:11px;color:var(--gold);font-weight:700">점수: ${t.score} / 10</div>`:''}
     </div>
   `).join('');
 
-  // 복사 버튼 이벤트 직접 바인딩
+  // 복사 버튼 — 제목만 복사 (점수 제외)
   el.querySelectorAll('.copy-title-btn').forEach((btn,i)=>{
     btn.addEventListener('click',()=>{
       const txt=el.querySelectorAll('.title-text')[i].textContent;
