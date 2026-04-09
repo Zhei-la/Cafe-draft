@@ -136,7 +136,10 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:560px){.main{padding:0 1rem 60px}}
+@media(max-width:560px){
+  .main{padding:0 1rem 60px}
+  .promo-grid{grid-template-columns:1fr!important}
+}
 </style>
 </head>
 <body>
@@ -161,6 +164,9 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
       <div class="scard-title">카테고리 선택 (복수 선택)</div>
     </div>
     <div class="chips" id="catChips"></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3)">
+      탭 — 선택/해제 &nbsp;|&nbsp; 모바일: 꾹 누르기 &nbsp;|&nbsp; PC: 더블클릭 → 삭제
+    </div>
     <div class="add-row">
       <input type="text" id="customCat" placeholder="직접 카테고리 추가 (엔터)">
       <button onclick="addCat()">추가</button>
@@ -175,6 +181,10 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
     </div>
     <div class="field">
       <textarea id="keywords" placeholder="글의 주제나 핵심 키워드를 입력하세요&#10;예) 강아지 슬개골 수술 후기, 비용 50만원, 회복기간 2주"></textarea>
+    </div>
+    <div class="field">
+      <label>추가 정보 <span style="color:var(--text3);font-weight:400">(꼭 넣고 싶은 내용, 경험, 가격 등 — 선택사항)</span></label>
+      <textarea id="extra" placeholder="예) 수술 전날 금식 필수, 병원 이름은 안 밝힘, 회복기간에 계단 금지라고 했음, 비용은 보험 적용 전 50만원"></textarea>
     </div>
   </div>
 
@@ -222,10 +232,16 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
         <button class="copy-btn" onclick="generate()">재생성</button>
       </div>
     </div>
-    <div class="title-box">
-      <div class="lbl">제목</div>
-      <div class="ttxt" id="genTitle">—</div>
+
+    <!-- 제목 5개 -->
+    <div class="title-box" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="lbl">제목 추천 5개</div>
+        <button class="copy-btn" id="regenTitleBtn" onclick="regenTitles()" style="padding:3px 10px;font-size:11px">제목 재생성</button>
+      </div>
+      <div id="titleList" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
+
     <div class="tag-wrap" id="genTags"></div>
     <div class="rbox" id="genBody"></div>
   </div>
@@ -236,29 +252,29 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
   </div>
 
   <!-- 블로그/스레드 자동화 배너 -->
-  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
-    <a href="https://zhei-la.github.io/Blog-Auto-promotion/" target="_blank" rel="noopener" class="promo-banner" style="margin-top:0">
+  <div class="promo-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+    <a href="https://zhei-la.github.io/Blog-Auto-promotion/" target="_blank" rel="noopener" class="promo-banner" style="margin-top:0;display:flex;flex-direction:column;align-items:center">
       <h3>블로그 자동화 · 대행</h3>
-      <p>블로그 자동화 & 관리 대행 가능합니다<br>직접 쓰기 번거로우신 분들을 위한 맞춤 솔루션</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;width:100%">
+      <p>블로그 관리가 부담스럽다면<br>저한테 맡겨봐요 👋</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;width:100%">
         <div class="collab-chip">가게·매장 운영자</div>
         <div class="collab-chip">사업자·자영업자</div>
-        <div class="collab-chip">글 쓸 시간 없는 분</div>
         <div class="collab-chip">병원·클리닉·학원</div>
         <div class="collab-chip">금융·부동산 종사자</div>
         <div class="collab-chip">보험·재무 컨설팅</div>
+        <div class="collab-chip">글 쓸 시간 없는 분</div>
       </div>
       <div class="collab-btn" style="margin:0 auto">자세히 보기 →</div>
     </a>
-    <a href="https://zhei-la.github.io/Threads-auto-landing/" target="_blank" rel="noopener" class="promo-banner" style="margin-top:0">
+    <a href="https://zhei-la.github.io/Threads-auto-landing/" target="_blank" rel="noopener" class="promo-banner" style="margin-top:0;display:flex;flex-direction:column;align-items:center">
       <h3>스레드 자동화</h3>
-      <p>매일 올리기 귀찮은 스레드, AI가 대신 올려드립니다<br>팔로워 유입부터 콘텐츠 발행까지 자동화</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;width:100%">
+      <p>매일 올리기 너무 귀찮죠?<br>AI가 대신 올려드릴게요 🤖</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;width:100%">
         <div class="collab-chip">스레드 계정 운영자</div>
         <div class="collab-chip">브랜드·매장 홍보</div>
-        <div class="collab-chip">SNS 자동화</div>
+        <div class="collab-chip">SNS 자동화 원하는 분</div>
         <div class="collab-chip">쿠팡파트너스</div>
-        <div class="collab-chip">글 소재 고민</div>
+        <div class="collab-chip">글 소재 고민하시는 분</div>
         <div class="collab-chip">매일 올리기 힘든 분</div>
       </div>
       <div class="collab-btn" style="margin:0 auto">자세히 보기 →</div>
@@ -268,7 +284,7 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
   <!-- 협업 섹션 -->
   <div class="collab-section">
     <h3>협업 및 제휴 문의</h3>
-    <p style="max-width:320px">서비스 광고 제휴, 기능 추가 요청, 맞춤형 원고 툴 제작 등 다양한 협업을 환영합니다</p>
+    <p style="max-width:320px">광고 제휴, 기능 추가, 맞춤형 툴 제작 등<br>뭐든 편하게 말씀해주세요 😊</p>
     <div class="collab-chips">
       <div class="collab-chip">📢 광고 제휴</div>
       <div class="collab-chip">🔧 기능 커스텀</div>
@@ -327,6 +343,7 @@ function renderCats(){
     <div class="chip multi ${selCats.has(c)?'on':''}" 
       id="chip-${c.replace(/[^a-z0-9]/gi,'_')}"
       onclick="tapCat('${c}')"
+      ondblclick="dblCat(event,'${c}')"
       ontouchstart="startHold(event,'${c}')" 
       ontouchend="endHold()" 
       ontouchmove="endHold()"
@@ -335,6 +352,14 @@ function renderCats(){
       <span class="chip-x" id="x-${c.replace(/[^a-z0-9]/gi,'_')}" style="display:none;margin-left:4px;font-size:10px" onclick="removeX(event,'${c}')">✕</span>
     </div>
   `).join('');
+}
+
+function dblCat(e,cat){
+  e.preventDefault();e.stopPropagation();
+  selCats.delete(cat);
+  allCats=allCats.filter(c=>c!==cat);
+  delete showingX[cat];
+  renderCats();
 }
 
 let holdTimer=null;
@@ -422,50 +447,117 @@ function buildPrompt(){
   const lenIdx=parseInt(document.getElementById('lengthSlider').value)-1;
 
   const optMap={
-    autoTitle:'매력적인 제목을 따로 생성하세요',
-    tags:'관련 해시태그를 5~8개 추천하세요',
-    noAI:'AI가 쓴 티가 나지 않게 사람이 직접 쓴 것처럼 자연스럽게',
-    paragraphs:'문단을 적절히 나눠서 가독성 있게 구성하세요',
-    cta:'마지막에 공감이나 댓글을 유도하는 문구를 추가하세요',
-    personal:'마치 직접 경험한 것처럼 개인 경험담 형식으로',
-    emoji:'적절한 이모지를 자연스럽게 섞어주세요',
-    seo:'네이버 검색에 잘 노출될 수 있도록 키워드를 자연스럽게 반복 사용'
+    autoTitle:'제목은 따로 생성 지침 따름',
+    tags:'관련 해시태그 5~8개',
+    noAI:'AI 티 절대 금지 — 사람이 직접 쓴 것처럼',
+    paragraphs:'문단 구분 + 문장 끝날 때마다 줄바꿈 필수',
+    cta:'마지막에 공감·댓글 유도 문구',
+    personal:'직접 경험한 것처럼 개인 경험담 형식',
+    emoji:'이모지 자연스럽게',
+    seo:'키워드 자연스럽게 반복'
   };
 
-  const activeOpts=OPTIONS.filter(o=>selOpts.has(o.id)).map(o=>optMap[o.id]);
+  const activeOpts=OPTIONS.filter(o=>selOpts.has(o.id)&&o.id!=='autoTitle').map(o=>optMap[o.id]);
 
-  return `당신은 네이버 카페에 글을 잘 쓰는 한국인입니다.
+  return `너는 네이버 카페에 글 잘 쓰는 한국인이야.
+
+절대 규칙:
+- 뻔한 말 금지 ("요즘 많이들 아시죠~", "오늘은 ~에 대해 알아볼게요" 같은 클리셰 절대 금지)
+- 읽는 사람이 궁금하게 만들어 — 첫 문장부터 훅 잡기
+- 위트 있게, 살짝 유머나 공감 요소 넣기
+- AI 티 절대 금지
+- 문장 끝날 때마다 줄바꿈 필수
+- 문단은 짧게, 호흡 빠르게
+- 마침표 남발 금지
 
 카테고리: ${cats.length?cats.join(', '):'일반'}
 주제/키워드: ${kw||'자유 주제'}
+꼭 포함할 내용: ${extra||'없음'}
 글 톤: ${tone?.label||'친근하게'}
-목표 분량: 약 ${LEN_TOKENS[lenIdx]}자 내외
+분량: 약 ${LEN_TOKENS[lenIdx]}자 내외
 
 추가 지침:
 ${activeOpts.map(o=>`- ${o}`).join('\n')}
 
-반드시 아래 형식으로만 출력하세요:
-[TITLE]
-제목
+반드시 아래 형식으로만 출력:
+[TITLES]
+1. 제목후보1
+2. 제목후보2
+3. 제목후보3
+4. 제목후보4
+5. 제목후보5
 
 [TAGS]
 #태그1 #태그2 #태그3 ...
 
 [BODY]
-본문 내용
+본문내용
 
-각 섹션을 [TITLE], [TAGS], [BODY] 마커로 반드시 구분하세요.`;
+각 섹션 [TITLES], [TAGS], [BODY] 마커로 반드시 구분.
+제목 5개는 각각 스타일 다르게 — 궁금증 유발형, 공감형, 정보형, 유머형, 반전형으로.`;
+}
+
+function buildTitleOnlyPrompt(){
+  const kw=document.getElementById('keywords').value.trim();
+  const cats=[...selCats];
+  const tone=TONES.find(t=>t.id===selTone);
+  return `네이버 카페 글 제목 5개만 만들어줘.
+카테고리: ${cats.length?cats.join(', '):'일반'}
+주제/키워드: ${kw||'자유 주제'}
+톤: ${tone?.label||'친근하게'}
+
+조건:
+- 뻔한 제목 금지
+- 궁금증 유발형, 공감형, 정보형, 유머형, 반전형으로 각각 다르게
+- 클릭하고 싶게 만들기
+
+반드시 아래 형식으로만:
+1. 제목1
+2. 제목2
+3. 제목3
+4. 제목4
+5. 제목5`;
 }
 
 function parseResult(text){
-  const tm=text.match(/\[TITLE\]\s*([\s\S]*?)(?=\[TAGS\]|\[BODY\]|$)/);
+  const tm=text.match(/\[TITLES\]\s*([\s\S]*?)(?=\[TAGS\]|\[BODY\]|$)/);
   const gm=text.match(/\[TAGS\]\s*([\s\S]*?)(?=\[BODY\]|$)/);
   const bm=text.match(/\[BODY\]\s*([\s\S]*?)$/);
   return{
-    title:tm?tm[1].trim():'',
+    titles:tm?tm[1].trim():'',
     tags:gm?gm[1].trim():'',
     body:bm?bm[1].trim():text
   };
+}
+
+function renderTitles(titlesText){
+  const lines=titlesText.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(l=>l);
+  const el=document.getElementById('titleList');
+  el.innerHTML=lines.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius-sm);padding:8px 12px;border:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0">${i+1}</span>
+      <span style="font-size:13px;font-weight:500;color:var(--text);flex:1;line-height:1.5">${t}</span>
+      <button onclick="copyTitle('${t.replace(/'/g,"\\'")}',this)" style="padding:3px 10px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif">복사</button>
+    </div>
+  `).join('');
+}
+
+function copyTitle(t,btn){
+  navigator.clipboard.writeText(t).then(()=>{
+    const o=btn.textContent;btn.textContent='복사됨!';setTimeout(()=>{btn.textContent=o},1500);
+  });
+}
+
+async function regenTitles(){
+  const btn=document.getElementById('regenTitleBtn');
+  btn.textContent='생성 중...';btn.disabled=true;
+  try{
+    const result=await callAPI(buildTitleOnlyPrompt());
+    renderTitles(result);
+  }catch(e){
+    btn.textContent='오류';
+  }
+  btn.textContent='제목 재생성';btn.disabled=false;
 }
 
 // ── API 호출 ──
@@ -501,7 +593,7 @@ async function generate(){
     const result=await callAPI(buildPrompt());
     const parsed=parseResult(result);
 
-    document.getElementById('genTitle').textContent=parsed.title||'(제목 없음)';
+    renderTitles(parsed.titles);
 
     const tagsEl=document.getElementById('genTags');
     tagsEl.innerHTML=parsed.tags
@@ -523,11 +615,11 @@ async function generate(){
 }
 
 async function copyAll(){
-  const title=document.getElementById('genTitle').textContent;
+  const titles=[...document.querySelectorAll('#titleList span[style*="font-size:13px"]')].map(t=>t.textContent).join('\n');
   const tags=[...document.querySelectorAll('.gtag')].map(t=>t.textContent).join(' ');
   const body=document.getElementById('genBody').textContent;
   try{
-    await navigator.clipboard.writeText(`${title}\n\n${body}\n\n${tags}`);
+    await navigator.clipboard.writeText(`[제목 후보]\n${titles}\n\n${body}\n\n${tags}`);
     const btn=event.target;const o=btn.textContent;btn.textContent='복사 완료!';
     setTimeout(()=>{btn.textContent=o},1500);
   }catch{}
