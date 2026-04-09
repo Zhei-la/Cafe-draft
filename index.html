@@ -253,6 +253,19 @@ footer{border-top:1px solid var(--border);padding:20px 2rem;text-align:center;fo
 
     <div class="tag-wrap" id="genTags"></div>
     <div class="rbox" id="genBody"></div>
+
+    <!-- 복사 버튼들 -->
+    <div id="copyBtns" style="display:none;margin-top:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="copy-btn" onclick="copyBody()" style="flex:1">본문 복사</button>
+        <button class="copy-btn" onclick="copyKeywords()" style="flex:1">키워드 복사</button>
+        <button class="copy-btn" onclick="copyAll()" style="flex:1">전체 복사</button>
+      </div>
+      <div id="kwBox" style="display:none;margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;letter-spacing:.05em">SEO 키워드 추천</div>
+        <div id="kwList" style="font-size:13px;color:var(--text2);line-height:2"></div>
+      </div>
+    </div>
   </div>
 
   <!-- 쿠팡 위젯 2 -->
@@ -502,7 +515,12 @@ ${activeOpts.map(o=>`- ${o}`).join('\n')}
 [BODY]
 본문내용
 
-각 섹션 [TITLES], [TAGS], [BODY] 마커로 반드시 구분.
+[KEYWORDS]
+키워드1
+키워드2
+(10개 이상, 네이버 검색 기반 실제 검색할 법한 형태로)
+
+각 섹션 [TITLES], [TAGS], [BODY], [KEYWORDS] 마커로 반드시 구분.
 제목 5개는 각각 스타일 다르게 — 궁금증 유발형, 공감형, 정보형, 유머형, 반전형으로.`;
 }
 
@@ -529,13 +547,15 @@ function buildTitleOnlyPrompt(){
 }
 
 function parseResult(text){
-  const tm=text.match(/\[TITLES\]\s*([\s\S]*?)(?=\[TAGS\]|\[BODY\]|$)/);
-  const gm=text.match(/\[TAGS\]\s*([\s\S]*?)(?=\[BODY\]|$)/);
-  const bm=text.match(/\[BODY\]\s*([\s\S]*?)$/);
+  const tm=text.match(/\[TITLES\]\s*([\s\S]*?)(?=\[TAGS\]|\[BODY\]|\[KEYWORDS\]|$)/);
+  const gm=text.match(/\[TAGS\]\s*([\s\S]*?)(?=\[BODY\]|\[KEYWORDS\]|$)/);
+  const bm=text.match(/\[BODY\]\s*([\s\S]*?)(?=\[KEYWORDS\]|$)/);
+  const km=text.match(/\[KEYWORDS\]\s*([\s\S]*?)$/);
   return{
     titles:tm?tm[1].trim():'',
     tags:gm?gm[1].trim():'',
-    body:bm?bm[1].trim():text
+    body:bm?bm[1].trim():text,
+    keywords:km?km[1].trim():''
   };
 }
 
@@ -612,6 +632,14 @@ async function generate(){
       :'';
 
     document.getElementById('genBody').textContent=parsed.body;
+
+    // 키워드 표시
+    if(parsed.keywords){
+      document.getElementById('kwList').textContent=parsed.keywords;
+      document.getElementById('kwBox').style.display='block';
+    }
+    document.getElementById('copyBtns').style.display='block';
+
     document.getElementById('resultSection').classList.add('show');
     document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
@@ -655,7 +683,8 @@ function copyAll(){
   const titles=[...document.querySelectorAll('.title-text')].map(t=>t.textContent).join('\n');
   const tags=[...document.querySelectorAll('.gtag')].map(t=>t.textContent).join(' ');
   const body=document.getElementById('genBody').textContent;
-  const text=`[제목 후보]\n${titles}\n\n${body}${tags?'\n\n'+tags:''}`;
+  const kw=document.getElementById('kwList').textContent;
+  const text=`[제목 후보]\n${titles}\n\n${body}${tags?'\n\n'+tags:''}${kw?'\n\n[키워드]\n'+kw:''}`;
   copyText(text, btn);
 }
 
@@ -663,6 +692,12 @@ function copyBody(){
   const btn=event.target;
   const body=document.getElementById('genBody').textContent;
   copyText(body, btn);
+}
+
+function copyKeywords(){
+  const btn=event.target;
+  const text=document.getElementById('kwList').textContent;
+  copyText(text,btn);
 }
 
 function trackCoupang(){
