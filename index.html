@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zheila AI Auto — 체험단·기자단 원고 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0f;--bg2:#161618;--bg3:#1e1e21;--bg4:#252528;
+  --gold:#c9a96e;--gold2:#e8c98a;--gold-dim:rgba(201,169,110,0.12);--gold-border:rgba(201,169,110,0.25);
+  --text:#f0ede8;--text2:#9e9b95;--text3:#5a5855;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --radius:14px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;line-height:1.6}
+
+/* HEADER */
+.site-header{
+  border-bottom:1px solid var(--border);padding:0 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  height:60px;position:sticky;top:0;z-index:100;
+  background:rgba(14,14,15,0.95);backdrop-filter:blur(12px);
+}
+.logo{font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:var(--gold);letter-spacing:-.3px}
+.logo span{color:var(--text2);font-weight:400;font-size:12px;margin-left:8px}
+.header-collab{
+  font-size:12px;color:var(--text2);border:1px solid var(--border2);
+  padding:5px 14px;border-radius:99px;cursor:pointer;transition:all .2s;
+  text-decoration:none;
+}
+.header-collab:hover{border-color:var(--gold-border);color:var(--gold)}
+
+/* MAIN */
+.main{max-width:860px;margin:0 auto;padding:24px 1.5rem 80px}
+
+/* SECTION CARD */
+.scard{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;margin-bottom:12px;
+  transition:border-color .2s;
+}
+.scard:hover{border-color:var(--border2)}
+.scard-head{display:flex;align-items:center;gap:10px;margin-bottom:1.1rem}
+.scard-num{
+  width:24px;height:24px;border-radius:50%;background:var(--gold-dim);
+  border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--gold);font-weight:700;flex-shrink:0;
+}
+.scard-title{font-size:12px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase}
+
+/* PLATFORM TABS */
+.platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:520px){.platform-grid{grid-template-columns:repeat(2,1fr)}}
+.ptab{
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:11px 6px;cursor:pointer;background:var(--bg3);
+  color:var(--text2);transition:all .2s;text-align:center;
+  font-size:12px;font-weight:500;user-select:none;
+}
+.ptab .pico{font-size:19px;display:block;margin-bottom:4px}
+.ptab .pdot{width:5px;height:5px;border-radius:50%;margin:5px auto 0;background:transparent;transition:background .2s}
+.ptab.active{background:var(--bg4);border-color:var(--gold-border);color:var(--text)}
+.ptab.active .pdot{background:var(--gold)}
+
+/* FIELDS */
+.field{margin-bottom:11px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:500}
+.field input,.field textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:9px 12px;
+  font-family:'Noto Sans KR',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:border-color .2s;
+}
+.field input:focus,.field textarea:focus{border-color:var(--gold-border);background:var(--bg4)}
+.field textarea{resize:vertical;min-height:64px;line-height:1.7}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+
+/* PLATFORM EXTRA FIELDS */
+.platform-extra{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.platform-extra.show{display:block}
+.platform-extra-label{
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.platform-extra-label::before{content:'';width:3px;height:12px;background:var(--gold);border-radius:2px}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  padding:4px 12px;border-radius:99px;border:1px solid var(--border2);
+  font-size:12px;background:var(--bg3);color:var(--text2);
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.chip.on{background:var(--gold-dim);border-color:var(--gold-border);color:var(--gold);font-weight:500}
+
+/* GEN BTN */
+.gen-btn{
+  width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,#c9a96e,#e8c98a);
+  color:#0e0e0f;font-family:'Noto Sans KR',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.gen-btn:hover{opacity:.85;transform:translateY(-1px)}
+.gen-btn:active{transform:translateY(0)}
+.gen-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.err{color:#e57373;font-size:12px;margin-top:8px;display:none;padding:8px 12px;background:rgba(229,115,115,0.08);border-radius:var(--radius-sm);border:1px solid rgba(229,115,115,0.2)}
+
+/* RESULTS */
+.result-section{display:none;margin-top:16px}
+.result-section.show{display:block}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.result-header h3{font-family:'Noto Serif KR',serif;font-size:15px;color:var(--gold)}
+.rtabs{display:flex;gap:5px;flex-wrap:wrap}
+.rtab{
+  padding:4px 13px;border-radius:99px;border:1px solid var(--border2);
+  font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .15s;
+}
+.rtab.active{background:var(--gold);border-color:var(--gold);color:#0e0e0f}
+.rcontent{display:none}
+.rcontent.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.rbox{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:1.1rem;
+  font-size:13.5px;line-height:2;white-space:pre-wrap;word-break:break-word;color:var(--text);
+}
+.rbox.loading{color:var(--text3);display:flex;align-items:center;gap:10px;font-style:italic;min-height:70px}
+.spin{width:13px;height:13px;border-radius:50%;flex-shrink:0;border:2px solid var(--border2);border-top-color:var(--gold);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.copy-btn{
+  margin-top:7px;padding:5px 14px;font-size:12px;font-family:'Noto Sans KR',sans-serif;
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;display:none;
+}
+.copy-btn:hover{border-color:var(--gold-border);color:var(--gold)}
+
+/* INSTA RESULT */
+.insta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.insta-grid{grid-template-columns:1fr}}
+.insta-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.9rem}
+.insta-panel .panel-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.insta-panel .panel-body{font-size:13px;line-height:1.85;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+.insta-panel.loading .panel-body{color:var(--text3);display:flex;align-items:center;gap:8px;font-style:italic}
+.hashtag-wrap{display:flex;flex-wrap:wrap;gap:5px;min-height:32px}
+.htag{display:inline-block;padding:3px 8px;border-radius:99px;background:rgba(201,110,189,0.12);color:#c96ebd;font-size:11px;font-weight:500;border:1px solid rgba(201,110,189,0.2)}
+.insta-btns{display:flex;gap:6px;margin-top:8px}
+.insta-btns button,.full-copy{
+  flex:1;padding:5px 0;font-size:11px;font-family:'Noto Sans KR',sans-serif;
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;
+}
+.insta-btns button:hover,.full-copy:hover{border-color:var(--gold-border);color:var(--gold)}
+.full-copy{width:100%;margin-top:7px;display:none;flex:none}
+
+/* 쿠팡 CPA 배너 */
+.ad-section{margin-top:16px}
+.ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.ad-grid{grid-template-columns:1fr}}
+
+.ad-cpa{
+  border-radius:var(--radius);overflow:hidden;
+  text-decoration:none;display:block;transition:transform .2s;
+  position:relative;
+}
+.ad-cpa:hover{transform:translateY(-2px)}
+
+/* 배너1: EVENT 스타일 (어두운 네이비) */
+.ad-cpa.event-type{
+  background:linear-gradient(135deg,#1a2744 0%,#243358 100%);
+  border:1px solid rgba(255,255,255,0.1);
+}
+/* 배너2: CHECK LIST 스타일 (어두운 슬레이트) */
+.ad-cpa.check-type{
+  background:linear-gradient(135deg,#1e2d3d 0%,#253545 100%);
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+.ad-cpa-inner{display:flex;height:140px}
+.ad-cpa-text{flex:1;padding:16px;display:flex;flex-direction:column;justify-content:space-between}
+.ad-cpa-badge{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;
+  padding:2px 9px;border-radius:3px;margin-bottom:6px;width:fit-content;
+}
+.event-type .ad-cpa-badge{background:#4a7fc1;color:#fff}
+.check-type .ad-cpa-badge{background:#3a8fbb;color:#fff}
+
+.ad-cpa-headline{font-size:14px;font-weight:700;color:#fff;line-height:1.45;margin-bottom:4px}
+.ad-cpa-sub{font-size:11px;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:8px}
+.ad-cpa-cta{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);
+  border-bottom:1px solid rgba(255,255,255,0.3);padding-bottom:1px;width:fit-content;
+}
+.ad-cpa-cta::after{content:'→';font-size:10px}
+
+.ad-cpa-img{
+  width:130px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 8px;overflow:hidden;
+}
+.ad-cpa-img-inner{
+  width:100%;height:100%;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;
+}
+.event-type .ad-cpa-img-inner{background:rgba(255,255,255,0.06)}
+.check-type .ad-cpa-img-inner{background:rgba(255,255,255,0.06)}
+
+/* 쿠팡 로고 + 주문하기 바 */
+.ad-cpa-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 14px;background:rgba(0,0,0,0.25);
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.coupang-logo-txt{font-family:Arial,sans-serif;font-weight:900;font-size:14px;color:#c00}
+.ad-order-btn{
+  background:#1a6dff;color:#fff;font-size:11px;font-weight:700;
+  padding:4px 12px;border-radius:3px;font-family:'Noto Sans KR',sans-serif;
+}
+
+/* CPA 광고 배너 */
+.ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.ad-grid{grid-template-columns:1fr}}
+.ad-cpa-card{
+  display:block;border-radius:var(--radius-sm);overflow:hidden;
+  background:#fff;border:1px solid #e0e0e0;
+  text-decoration:none;transition:all .2s;
+}
+.ad-cpa-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3)}
+.ad-cpa-img{
+  width:100%;height:110px;background:#f9f9f9;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.ad-cpa-img img{width:100%;height:100%;object-fit:contain}
+.ad-cpa-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 10px;background:#fff;border-top:1px solid #eee;
+}
+.ad-order-btn{
+  background:#1a6dff;color:#fff;font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:3px;font-family:'Noto Sans KR',sans-serif;
+}
+
+
+.promo-banner{
+  display:block;margin-top:12px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;text-align:center;
+  text-decoration:none;transition:border-color .2s;
+}
+.promo-banner:hover{border-color:var(--border2)}
+.promo-banner h3{font-family:'Noto Serif KR',serif;font-size:16px;margin-bottom:5px;color:var(--gold)}
+.promo-banner p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7}
+
+/* 협업 섹션 */
+.collab-section{
+  margin-top:12px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;text-align:center;
+}
+.collab-section h3{font-family:'Noto Serif KR',serif;font-size:16px;margin-bottom:5px;color:var(--gold)}
+.collab-section p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7}
+.collab-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px}
+.collab-chip{
+  padding:4px 12px;border-radius:99px;border:1px solid var(--border2);
+  font-size:12px;background:var(--bg3);color:var(--text2);
+}
+.collab-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--gold);color:#0e0e0f;padding:10px 24px;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;
+}
+.collab-btn:hover{background:var(--gold2)}
+
+.style-cat{
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:8px 10px;cursor:pointer;background:var(--bg3);
+  color:var(--text2);font-size:12px;font-weight:500;
+  text-align:center;transition:all .2s;user-select:none;
+}
+.style-cat.on{background:var(--gold-dim);border-color:var(--gold-border);color:var(--gold)}
+.style-sub-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.length-chip{
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:10px 8px;cursor:pointer;background:var(--bg3);
+  text-align:center;transition:all .2s;user-select:none;
+}
+.length-chip.on{background:var(--gold-dim);border-color:var(--gold-border)}
+.length-label{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:3px}
+.length-chip.on .length-label{color:var(--gold)}
+.length-count{font-size:11px;color:var(--text3)}
+.length-chip.on .length-count{color:var(--gold);opacity:.7}
+footer{
+  border-top:1px solid var(--border);padding:20px 2rem;
+  text-align:center;font-size:12px;color:var(--text3);line-height:2;
+}
+</style>
+</head>
+<body>
+
+<main class="main">
+
+  <!-- HERO -->
+  <div style="text-align:center;padding:48px 1rem 36px;background:radial-gradient(ellipse 60% 40% at 50% 0%, rgba(201,169,110,0.07) 0%, transparent 70%)">
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:99px;padding:5px 14px;font-size:11px;color:var(--gold);font-weight:500;letter-spacing:.05em;margin-bottom:20px">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;display:inline-block"></span>
+      AI 원고 자동 생성
+    </div>
+    <h1 style="font-family:'Noto Serif KR',serif;font-size:clamp(24px,5vw,38px);font-weight:700;line-height:1.3;margin-bottom:12px;letter-spacing:-.5px">블로그·SNS 체험단 원고,<br><em style="font-style:normal;color:var(--gold)">10초</em>면 완성됩니다</h1>
+    <p style="font-size:14px;color:var(--text2);max-width:440px;margin:0 auto">블로그 최적화 원고를 AI가 자동으로 작성해드려요</p>
+  </div>
+
+  <!-- 쿠팡 위젯 1 -->
+  <div style="width:100%;overflow:hidden;margin-bottom:12px">
+    <iframe src="https://ads-partners.coupang.com/widgets.html?id=979545&template=carousel&trackingCode=AF5722914&subId=&width=728&height=120&tsource=" width="100%" height="120" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" browsingtopics></iframe>
+  </div>
+
+  <!-- STEP 1: 기본 정보 -->
+  <div class="scard">
+    <div class="scard-head">
+      <div class="scard-num">1</div>
+      <div class="scard-title">기본 정보</div>
+    </div>
+    <div class="field">
+      <label>메인 키워드 <span style="color:var(--text3);font-weight:400">(SEO에 활용됩니다)</span></label>
+      <input type="text" id="keyword" placeholder="예: 성수동 브런치 카페, 강남 스파, 홍대 맛집" />
+    </div>
+    <div class="field">
+      <label>업체명 또는 플레이스 링크</label>
+      <input type="text" id="place" placeholder="업체명 또는 네이버 지도·카카오맵 링크" />
+    </div>
+    <div class="field">
+      <label>추가 정보 <span style="color:var(--text3);font-weight:400">(메뉴·가격·특징 등 — 선택사항)</span></label>
+      <textarea id="extra" placeholder="예: 아메리카노 6,500원 / 루프탑 좌석 있음 / 주차 무료&#10;키워드 반복 횟수 지정: 성수동 브런치 카페 (3) — 숫자 생략 시 AI가 알아서 조절"></textarea>
+    </div>
+  </div>
+
+  <!-- STEP 2: 맞춤 설정 -->
+  <div class="scard">
+    <div class="scard-head">
+      <div class="scard-num">2</div>
+      <div class="scard-title">맞춤 설정</div>
+    </div>
+    <div class="field">
+      <label>나이대</label>
+      <div class="chips" id="age">
+        <div class="chip" onclick="solo(this)">10대</div>
+        <div class="chip on" onclick="solo(this)">20대</div>
+        <div class="chip" onclick="solo(this)">30대</div>
+        <div class="chip" onclick="solo(this)">40대</div>
+        <div class="chip" onclick="solo(this)">50대+</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>성별</label>
+      <div class="chips" id="gender">
+        <div class="chip on" onclick="solo(this)">여성</div>
+        <div class="chip" onclick="solo(this)">남성</div>
+        <div class="chip" onclick="solo(this)">중립</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>리뷰 톤</label>
+      <div class="chips" id="tone">
+        <div class="chip on" onclick="solo(this)">친근한</div>
+        <div class="chip" onclick="solo(this)">정보형</div>
+        <div class="chip" onclick="solo(this)">감성적인</div>
+        <div class="chip" onclick="solo(this)">솔직후기</div>
+        <div class="chip" onclick="solo(this)">전문적인</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>업종</label>
+      <div id="category-wrap">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px" id="cat-tabs">
+          <div class="style-cat on" onclick="selectCat(this,'food')">🍽 장소·음식</div>
+          <div class="style-cat" onclick="selectCat(this,'product')">🛍 제품·서비스</div>
+          <div class="style-cat" onclick="selectCat(this,'travel')">✈ 여행·숙박</div>
+          <div class="style-cat" onclick="selectCat(this,'health')">💪 헬스·뷰티</div>
+        </div>
+        <div class="style-sub-wrap" id="sub-food">
+          <div class="chip on" onclick="soloCat(this)">맛집</div>
+          <div class="chip" onclick="soloCat(this)">카페</div>
+          <div class="chip" onclick="soloCat(this)">브런치</div>
+          <div class="chip" onclick="soloCat(this)">술집·바</div>
+          <div class="chip" onclick="soloCat(this)">배달</div>
+          <div class="chip" onclick="soloCat(this)">디저트</div>
+          <div class="chip" onclick="soloCat(this)">패스트푸드</div>
+        </div>
+        <div class="style-sub-wrap" id="sub-product" style="display:none">
+          <div class="chip" onclick="soloCat(this)">생활용품</div>
+          <div class="chip" onclick="soloCat(this)">인테리어·소품</div>
+          <div class="chip" onclick="soloCat(this)">디지털·가전</div>
+          <div class="chip" onclick="soloCat(this)">식품·건강식품</div>
+          <div class="chip" onclick="soloCat(this)">패션·의류</div>
+          <div class="chip" onclick="soloCat(this)">유아·육아</div>
+        </div>
+        <div class="style-sub-wrap" id="sub-travel" style="display:none">
+          <div class="chip" onclick="soloCat(this)">호텔</div>
+          <div class="chip" onclick="soloCat(this)">펜션·리조트</div>
+          <div class="chip" onclick="soloCat(this)">국내여행</div>
+          <div class="chip" onclick="soloCat(this)">해외여행</div>
+          <div class="chip" onclick="soloCat(this)">항공·교통</div>
+          <div class="chip" onclick="soloCat(this)">액티비티</div>
+        </div>
+        <div class="style-sub-wrap" id="sub-health" style="display:none">
+          <div class="chip" onclick="soloCat(this)">스킨케어</div>
+          <div class="chip" onclick="soloCat(this)">헤어·네일</div>
+          <div class="chip" onclick="soloCat(this)">다이어트·보조제</div>
+          <div class="chip" onclick="soloCat(this)">헬스·운동용품</div>
+          <div class="chip" onclick="soloCat(this)">병원·클리닉</div>
+          <div class="chip" onclick="soloCat(this)">스파·마사지</div>
+        </div>
+        <input type="hidden" id="category" value="맛집">
+      </div>
+    </div>
+    <div class="field">
+      <label>리뷰 스타일</label>
+      <div class="chips" id="style">
+        <div class="chip on" onclick="solo(this)">일상</div>
+        <div class="chip" onclick="solo(this)">전문가</div>
+        <div class="chip" onclick="solo(this)">솔직 후기</div>
+        <div class="chip" onclick="solo(this)">데이트</div>
+        <div class="chip" onclick="solo(this)">외식</div>
+        <div class="chip" onclick="solo(this)">회식</div>
+        <div class="chip" onclick="solo(this)">혼밥</div>
+        <div class="chip" onclick="solo(this)">재방문 후기</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>글 분량</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="length">
+        <div class="length-chip" onclick="soloLength(this)" data-val="짧게">
+          <div class="length-label">짧게</div>
+          <div class="length-count">1,000 ~ 1,500자</div>
+        </div>
+        <div class="length-chip on" onclick="soloLength(this)" data-val="보통">
+          <div class="length-label">보통</div>
+          <div class="length-count">1,500 ~ 2,000자</div>
+        </div>
+        <div class="length-chip" onclick="soloLength(this)" data-val="길게">
+          <div class="length-label">길게</div>
+          <div class="length-count">2,000 ~ 3,000자</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 생성 버튼 -->
+  <button class="gen-btn" id="genBtn" onclick="generateAll()">✦ 원고 생성하기</button>
+  <div class="err" id="err"></div>
+
+  <!-- CPA 광고 배너 -->
+  <div class="ad-grid" style="margin-top:12px">
+    <a class="ad-cpa-card" href="CPA_LINK_1" target="_blank" rel="noopener">
+      <div class="ad-cpa-img">
+        <img src="CPA_IMG_1" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div class="ad-cpa-bottom">
+        <span style="color:#c00;font-weight:900;font-size:15px;font-family:Arial,sans-serif">coupang</span>
+        <span class="ad-order-btn">주문하기 ›</span>
+      </div>
+    </a>
+    <a class="ad-cpa-card" href="CPA_LINK_2" target="_blank" rel="noopener">
+      <div class="ad-cpa-img">
+        <img src="CPA_IMG_2" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div class="ad-cpa-bottom">
+        <span style="color:#c00;font-weight:900;font-size:15px;font-family:Arial,sans-serif">coupang</span>
+        <span class="ad-order-btn">주문하기 ›</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 블로그 자동화 홍보 배너 -->
+  <a href="https://zhei-la.github.io/Blog-Auto-promotion/" target="_blank" rel="noopener" class="promo-banner">
+    <h3>블로그 자동화 · 대행</h3>
+    <p>블로그 자동화 & 관리 대행 가능합니다<br>직접 쓰기 번거로우신 분들을 위한 맞춤 솔루션</p>
+    <div class="collab-chips" style="justify-content:center;margin-bottom:14px">
+      <div class="collab-chip">🏪 가게·매장 운영자</div>
+      <div class="collab-chip">📋 사업자·자영업자</div>
+      <div class="collab-chip">🏥 병원·클리닉·학원</div>
+      <div class="collab-chip">🏠 금융·부동산 종사자</div>
+      <div class="collab-chip">💼 보험 설계사·금융·재무 컨설팅</div>
+      <div class="collab-chip">🛍 온라인 쇼핑몰</div>
+      <div class="collab-chip">⏰ 글 쓸 시간 없는 분</div>
+    </div>
+    <div class="collab-btn" style="margin:0 auto">자세히 보기 →</div>
+  </a>
+
+  <!-- 쿠팡 위젯 2 -->
+  <div style="width:100%;overflow:hidden;margin-top:12px">
+    <iframe src="https://ads-partners.coupang.com/widgets.html?id=979546&template=carousel&trackingCode=AF5722914&subId=&width=728&height=120&tsource=" width="100%" height="120" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" browsingtopics></iframe>
+  </div>
+
+  <!-- 결과 -->
+  <div class="result-section" id="resultSection">
+    <div class="result-header">
+      <h3>생성된 원고</h3>
+      <div class="rtabs" id="rtabs"></div>
+    </div>
+    <div id="rcontents"></div>
+  </div>
+
+  <!-- 협업 섹션 -->
+  <div class="collab-section">
+    <h3>협업 및 제휴 문의</h3>
+    <p>서비스 광고 제휴, 기능 추가 요청, 맞춤형 원고 툴 제작 등<br>다양한 협업을 환영합니다</p>
+    <div class="collab-chips">
+      <div class="collab-chip">📢 광고 제휴</div>
+      <div class="collab-chip">🔧 기능 커스텀</div>
+      <div class="collab-chip">🤝 마케팅 협업</div>
+    </div>
+    <a class="collab-btn" href="https://open.kakao.com/o/sYOURCODE" target="_blank" rel="noopener">
+      💬 카카오톡으로 문의하기
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <span style="font-size:11px">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</span><br>
+  <strong style="color:var(--text2)">Zheila AI Auto</strong> — AI 체험단·기자단 원고 생성기
+</footer>
+
+<script>
+function toggleP(el){
+  el.classList.toggle('active');
+}
+function solo(el){
+  el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+function val(id){
+  if(id==='length'){const e=document.querySelector('.length-chip.on');return e?e.dataset.val:'보통';}
+  if(id==='style'){return document.getElementById('style').value||'맛집 전문';}
+  const e=document.querySelector('#'+id+' .on');return e?e.textContent:''
+}
+function soloLength(el){document.querySelectorAll('.length-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+function soloCat(el){
+  el.closest('.style-sub-wrap').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('category').value=el.textContent.trim();
+}
+function selectCat(el,cat){
+  document.querySelectorAll('.style-cat').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.style-sub-wrap').forEach(s=>s.style.display='none');
+  const sub=document.getElementById('sub-'+cat);
+  sub.style.display='flex';
+  const first=sub.querySelector('.chip');
+  if(first){sub.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));first.classList.add('on');document.getElementById('category').value=first.textContent.trim();}
+}
+function val(id){
+  if(id==='length'){const e=document.querySelector('.length-chip.on');return e?e.dataset.val:'보통';}
+  if(id==='style'){const e=document.querySelector('#style .on');return e?e.textContent.trim():'';}
+  if(id==='category'){return document.getElementById('category').value||'맛집';}
+  const e=document.querySelector('#'+id+' .on');return e?e.textContent.trim():''
+}
+function activePlatforms(){
+  const el=document.querySelector('#platform-chips .on');
+  return el?[el.dataset.p]:['naver'];
+}
+
+const PNAME={naver:'네이버',tistory:'티스토리'};
+
+function buildPrompt(p,info){
+  const L={짧게:{n:'1000~1500자',t:'1000~1500자'},보통:{n:'1500~2000자',t:'1500~2000자'},길게:{n:'2000~3000자',t:'2000~3000자'}};
+  const base=`키워드: ${info.keyword}\n업체: ${info.place||'미입력'}\n업종: ${info.category}\n추가정보: ${info.extra||'없음'}\n나이대: ${info.age} / 성별: ${info.gender} / 리뷰톤: ${info.tone} / 리뷰스타일: ${info.style} / 분량: ${info.length}\n\n※ 키워드를 글 전체에 자연스럽게 녹여서 사용할 것. 추가정보에 "키워드 (숫자)" 형식이 있으면 그 횟수 이상 반드시 포함, 숫자가 없으면 글 분량에 맞게 센스 있게 적절히 반복할 것`;
+
+  if(p==='naver') return `당신은 네이버 블로그 체험단·기자단 전문 작가입니다.
+아래 정보로 네이버 블로그 원고를 작성하세요.
+- 분량: ${L[info.length].n}
+- 제목 포함 (SEO 최적화, 키워드 자연스럽게)
+- 소제목 2~3개 ([위치·접근성] [메뉴·서비스] [총평] 형식)
+- 실제 방문자처럼, AI 티 절대 금지
+- 마지막에 별점(★)과 재방문 의사 한 줄
+${base}
+원고만 출력하세요.`;
+
+  if(p==='tistory') return `당신은 티스토리 블로그 체험단·기자단 작가입니다.
+아래 정보로 티스토리 원고를 작성하세요.
+- 분량: ${L[info.length].t}
+- 제목 포함
+- 정보 전달 위주 + 깔끔한 구성
+- 소제목은 [텍스트] 형식
+- 장점 3가지, 아쉬운 점 1가지
+- 솔직하고 실용적, 마지막 총평 1~2문장
+${base}
+원고만 출력하세요.`;
+
+  if(p==='instagram') return `당신은 인스타그램 감성 카피라이터입니다.
+반드시 아래 형식으로만 출력하세요:
+[캡션]
+(내용)
+[해시태그]
+(#태그1, #태그2 ... 15개, 쉼표 구분)
+
+캡션 조건:
+- 첫 문장 강렬하게 (저장 욕구 유발)
+- 이모지 자연스럽게
+- 감성·공감 문체, 실용 정보 포함
+- ${info.length==='짧게'?'80~120자':info.length==='길게'?'300~400자':'180~250자'}
+${info.insta_concept?'- 계정 컨셉: '+info.insta_concept:''}
+${info.insta_point?'- 강조 포인트: '+info.insta_point:''}
+해시태그: 대중+롱테일 혼합, 업종+위치+감성 키워드, 15개
+${base}`;
+
+  if(p==='threads') return `당신은 스레드(Threads) SNS 콘텐츠 작가입니다.
+아래 정보로 스레드 게시물을 작성하세요.
+- 분량: ${L[info.length].th}
+- 짧고 임팩트 있는 문체, 대화체
+- "진짜", "솔직히", "~임", "~음" 자연스러운 말투
+- 이모지 1~2개만
+- 해시태그 3~5개 (없어도 됨)
+- 광고 아닌 친구 추천 느낌
+${info.threads_point?'- 핵심 포인트: '+info.threads_point:''}
+${base}
+게시물만 출력하세요.`;
+}
+
+async function callClaude(prompt){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`)}
+  const d=await r.json();
+  return d.content.map(b=>b.text||'').join('').trim();
+}
+
+function parseInsta(text){
+  const cm=text.match(/\[캡션\]([\s\S]*?)\[해시태그\]/);
+  const tm=text.match(/\[해시태그\]([\s\S]*)$/);
+  const caption=cm?cm[1].trim():text;
+  const tags=(tm?tm[1].trim():'').split(/[\s,]+/).filter(t=>t.startsWith('#'));
+  return{caption,tags};
+}
+
+function renderInsta(areaId,text){
+  const{caption,tags}=parseInsta(text);
+  window._insta={caption,tags};
+  document.getElementById(areaId).innerHTML=`
+  <div class="insta-grid">
+    <div class="insta-panel">
+      <div class="panel-label">📝 캡션</div>
+      <div class="panel-body" id="insta-cap">${caption}</div>
+      <div class="insta-btns"><button onclick="cpText('insta-cap',this)">캡션 복사</button></div>
+    </div>
+    <div class="insta-panel">
+      <div class="panel-label">🏷 해시태그</div>
+      <div class="hashtag-wrap">${tags.map(t=>`<span class="htag">${t}</span>`).join('')}</div>
+      <div class="insta-btns"><button onclick="cpTags()">해시태그 복사</button></div>
+    </div>
+  </div>
+  <button class="full-copy" style="display:block" onclick="cpFull()">캡션 + 해시태그 전체 복사</button>`;
+}
+
+function cpText(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{
+    const o=btn.textContent;btn.textContent='복사 완료!';setTimeout(()=>{btn.textContent=o},1500);
+  });
+}
+function cpTags(){navigator.clipboard.writeText((window._insta?.tags||[]).join(' '))}
+function cpFull(){if(window._insta)navigator.clipboard.writeText(window._insta.caption+'\n\n'+window._insta.tags.join(' '))}
+
+async function generateAll(){
+  const keyword=document.getElementById('keyword').value.trim();
+  const errEl=document.getElementById('err');
+  errEl.style.display='none';
+  if(!keyword){errEl.textContent='메인 키워드를 입력해주세요.';errEl.style.display='block';return}
+  const platforms=activePlatforms();
+  if(!platforms.length){errEl.textContent='플랫폼을 하나 이상 선택해주세요.';errEl.style.display='block';return}
+
+  const info={
+    keyword,
+    place:document.getElementById('place').value.trim(),
+    extra:document.getElementById('extra').value.trim(),
+    category:val('category'),
+    age:val('age'),gender:val('gender'),
+    tone:val('tone'),style:val('style'),length:val('length'),
+  };
+
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;btn.textContent='⏳ 생성 중...';
+
+  const tabsEl=document.getElementById('rtabs');
+  const contentsEl=document.getElementById('rcontents');
+  tabsEl.innerHTML='';contentsEl.innerHTML='';
+
+  platforms.forEach((p,i)=>{
+    const tab=document.createElement('div');
+    tab.className='rtab'+(i===0?' active':'');
+    tab.textContent=PNAME[p];
+    tab.onclick=()=>{
+      document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.rcontent').forEach(c=>c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('rc-'+p).classList.add('active');
+    };
+    tabsEl.appendChild(tab);
+
+    const rc=document.createElement('div');
+    rc.className='rcontent'+(i===0?' active':'');
+    rc.id='rc-'+p;
+
+    if(p==='instagram'){
+      rc.innerHTML=`<div id="insta-area"><div class="insta-grid">
+        <div class="insta-panel loading"><div class="panel-label">📝 캡션</div><div class="panel-body"><div class="spin"></div> 생성 중...</div></div>
+        <div class="insta-panel loading"><div class="panel-label">🏷 해시태그</div><div class="panel-body"><div class="spin"></div></div></div>
+      </div></div>`;
+    } else {
+      rc.innerHTML=`<div class="rbox loading" id="box-${p}"><div class="spin"></div> 원고 생성 중...</div><button class="copy-btn" id="copy-${p}" onclick="cpText('box-${p}',this)">원고 복사하기</button>`;
+    }
+    contentsEl.appendChild(rc);
+  });
+
+  document.getElementById('resultSection').classList.add('show');
+  document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'});
+
+  await Promise.all(platforms.map(async p=>{
+    try{
+      const result=await callClaude(buildPrompt(p,info));
+      if(p==='instagram'){
+        renderInsta('insta-area',result);
+      } else {
+        const box=document.getElementById('box-'+p);
+        box.className='rbox';box.textContent=result;
+        document.getElementById('copy-'+p).style.display='inline-block';
+      }
+    } catch(e){
+      if(p==='instagram'){
+        document.getElementById('insta-area').innerHTML=`<div class="rbox" style="color:#e57373">오류: ${e.message}</div>`;
+      } else {
+        const box=document.getElementById('box-'+p);
+        box.className='rbox';box.style.color='#e57373';box.textContent='오류: '+e.message;
+      }
+    }
+  }));
+
+  btn.disabled=false;btn.textContent='✦ 다시 생성하기';
+}
+</script>
+</body>
+</html>
