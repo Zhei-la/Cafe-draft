@@ -18,6 +18,7 @@ const RATE_LIMIT = 100;
 const BLOG_DRAFT_URL = process.env.BLOG_DRAFT_URL || 'https://blog-draft-production.up.railway.app';
 let ACCESS_CODE = '';
 let codeGeneratedAt = new Date();
+let SESSION_VERSION = 1;
 const codeUsageLogs = [];
 const generateLogs = [];
 const dailyGenerates = new Map();
@@ -40,7 +41,8 @@ async function syncCodeFromMaster() {
     const data = await res.json();
     if(data.current_code) {
       ACCESS_CODE = data.current_code;
-      console.log('[카페] 코드 동기화 완료:', ACCESS_CODE);
+      SESSION_VERSION = data.session_version || SESSION_VERSION;
+      console.log('[카페] 코드/버전 동기화 완료:', ACCESS_CODE, 'v'+SESSION_VERSION);
     }
   } catch(e) {
     console.error('[카페] 코드 동기화 실패:', e.message);
@@ -125,7 +127,7 @@ app.post('/api/verify-code', (req, res) => {
     const today = getToday();
     const already = codeUsageLogs.find(l => l.ip === ip && l.date === today);
     if(!already) codeUsageLogs.push({ ip, time: getTime(), date: today });
-    res.json({ success: true });
+    res.json({ success: true, version: SESSION_VERSION });
   } else {
     securityLogs.push({ time: getTime(), ip, type: '코드 오류', detail: `잘못된 코드 입력: ${code}` });
     res.json({ success: false });
@@ -205,7 +207,8 @@ app.get('/api/stats', (req, res) => {
     weekly_visitors: weekly,
     current_code: ACCESS_CODE,
     code_generated_at: codeGeneratedAt.toISOString(),
-    status: 'ok'
+    status: 'ok',
+    session_version: SESSION_VERSION
   });
 });
 
